@@ -20,7 +20,6 @@ extern void addfd( int epollfd, int fd, bool one_shot );
 // 从epoll中移除文件描述符
 extern void removefd( int epollfd, int fd );
 // 修改epoll对象中的文件描述符
-// #################原来的版本怎么没有，难道没有用这个函数马？###########
 //extern void modfd(int epollfd, int fd, int ev);
 
 // 添加信号捕捉
