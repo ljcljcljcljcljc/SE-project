@@ -54,7 +54,7 @@ public:
             throw std::exception();
         }
     }
-    // 无参构造函数，num为信号量初始值
+    // 有参构造函数，num为信号量初始值
     sem(int num) {
         if( sem_init( &m_sem, 0, num ) != 0 ) {
             throw std::exception();
