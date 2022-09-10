@@ -109,7 +109,7 @@ bool threadpool< T >::append( T* request )
     }
     m_workqueue.push_back(request);
     m_queuelocker.unlock();
-    m_queuestat.post();   // V操作，相当于向任务队列中增加了一个proudct（任务），让工作线程（消费者）去消费
+    m_queuestat.post();   // V操作，相当于向任务队列中增加了一个proudct（任务），通知工作线程（消费者）去消费
     return true;
 }
 
@@ -117,7 +117,7 @@ bool threadpool< T >::append( T* request )
 template< typename T >
 void* threadpool< T >::worker( void* arg )
 {
-    threadpool* pool = ( threadpool* )arg;  // 强制类型转换
+    threadpool* pool = ( threadpool* )arg;  // 强制类型转换，void*其实是万能指针了
     pool->run();                            // run函数，工作线程实际执行的代码
     return pool;                            // 此处worker函数的返回值其实没啥用
 }
@@ -127,7 +127,7 @@ template< typename T >
 void threadpool< T >::run() {
 
     while (!m_stop) {
-        m_queuestat.wait();         // P操作，工作线程消费一个product（任务）去处理
+        m_queuestat.wait();         // P操作，工作线程消费一个product（任务）去处理，无任务要处理时，会在此处阻塞
         m_queuelocker.lock();       // 由于要操作队列，所以要先对队列上锁
         if ( m_workqueue.empty() ) {
             m_queuelocker.unlock();
