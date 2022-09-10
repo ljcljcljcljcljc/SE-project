@@ -1,5 +1,5 @@
 Linux轻量级Web服务器
-参考牛客网C++项目
+参考牛客网C++项目：https://www.nowcoder.com/courses/cover/live/504
 
 项目简述：
     在Linux环境下使用C++搭建轻量级web服务器，服务器能够支持相对数量的客户端并发访问并进行响应
@@ -39,6 +39,8 @@ webserver---|----README.txt
 
 
 如何运行（Linux下）：
+（0）更改资源目录：
+    更改文件"http_conn.cpp"中的doc_root中的资源路径为本机资源路径
 （1）client-server的测试
     进入webserver目录，使用下述命令编译源文件
         g++ *.cpp -o server -pthread
