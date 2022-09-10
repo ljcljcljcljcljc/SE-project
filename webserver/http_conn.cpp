@@ -1,5 +1,9 @@
 #include "http_conn.h"
 
+// 网站的根目录（就是网站资源的路径）
+const char* doc_root = "/home/ljchen/webserver/resources";
+
+
 // 定义HTTP响应的一些状态信息
 const char* ok_200_title = "OK";
 const char* error_400_title = "Bad Request";
@@ -11,8 +15,116 @@ const char* error_404_form = "The requested file was not found on this server.\n
 const char* error_500_title = "Internal Error";
 const char* error_500_form = "There was an unusual problem serving the requested file.\n";
 
-// 网站的根目录（就是网站资源的路径）
-const char* doc_root = "/home/ljchen/webserver/resources";
+// ----- 静态变量的值必须初始化
+// 所有的客户数，所有http_conn共用一个m_user_count
+int http_conn::m_user_count = 0;
+// 所有socket上的事件都被注册到同一个epoll内核事件中，所以设置成静态的
+// 在main函数中，这个值会被重新赋值为创建出来的epollfd
+int http_conn::m_epollfd = -1;
+
+
+// -----------------------------------------------
+// 下面为函数部分
+// -----------------------------------------------
+
+
+// 函数声明部分----------------------------------------
+// -----------------------------------------------
+// -----------------------------------------------
+// -----------------------------------------------
+// -----------------------------------------------
+// -----------------------------------------------
+
+// // ######################################### 读取数据和发送数据的函数，由主线程调用
+// // 循环读取客户数据，直到无数据可读或者对方关闭连接
+// bool http_conn::read();
+// // 发送HTTP响应
+// // 响应数据的准备过程已经在之前的read函数中完成了，此处write函数只需要负责发送就行了
+// // 实际上更确切的来说是一个send函数
+// bool http_conn::write();
+
+// // ########################################## process()、process_read()、process_write()函数
+// // ########################################## 工作线程工作的函数，包括两部分1-process_read()-解析http请求，2-process_write()-生成http响应
+// // 由线程池中的工作线程调用，这是处理HTTP请求的入口函数，是http_conn类的成员函数
+// void http_conn::process();
+// // 主状态机，解析请求
+// http_conn::HTTP_CODE http_conn::process_read();
+// // 根据服务器处理HTTP请求的结果，决定返回给客户端的内容
+// bool http_conn::process_write(HTTP_CODE ret);
+
+
+// // ################################################### 解析请求行、请求头、请求体的函数
+// // ################################################### 【在process_read()中调用】
+// // 解析HTTP请求行，获得请求方法，目标URL,以及HTTP版本号
+// // 我们只支持GET方法和http版本1.1
+// http_conn::HTTP_CODE http_conn::parse_request_line(char* text);
+// // 解析HTTP请求的一个头部信息
+// http_conn::HTTP_CODE http_conn::parse_headers(char* text);
+// // 我们没有真正解析HTTP请求的消息体，只是判断它是否被完整的读入了
+// http_conn::HTTP_CODE http_conn::parse_content( char* text );
+// // 解析一行，判断依据\r\n（就是从状态机了）
+// http_conn::LINE_STATE http_conn::parse_line();
+// // 当得到一个完整、正确的HTTP请求时，我们就分析目标文件的属性，
+// // 如果目标文件存在、对所有用户可读，且不是目录，则使用mmap将其
+// // 映射到内存地址m_file_address处，并告诉调用者获取文件成功
+// http_conn::HTTP_CODE http_conn::do_request();
+
+
+// // ################################################### 准备相应数据的函数（主要包括响应行和响应头），也即生成http相应
+// // ################################################### 【在process_write()中调用】
+// bool http_conn::add_status_line( int status, const char* title );
+// // 添加响应头
+// bool http_conn::add_headers(int content_len);
+// // 添加响应体（如果请求不到数据，添加的是返回的错误信息）如果能正确请求到数据，就没有这个content字段了
+// // 要理解好添加响应体的这个数据
+// bool http_conn::add_content( const char* content );
+// // 添加响应头的Content-Length字段
+// bool http_conn::add_content_length(int content_len);
+// // 添加响应头的Connection字段（就是是否keep-alive）
+// bool http_conn::add_linger();
+// // 添加响应头和响应体之间的空白行
+// bool http_conn::add_blank_line();
+// // 添加响应头的Content-Type字段
+// bool http_conn::add_content_type();
+// // 往写缓冲中写入待发送的数据
+// // 就是具体的可变参数操作函数
+// // 类似printf
+// bool http_conn::add_response( const char* format, ... );
+// // 添加响应行（类似：http/1.1 200 OK)
+
+
+// // ##############################################任务类初始化及关闭连接的函数
+// // 初始化连接,外部调用初始化套接字地址
+// // 这个函数其实进行了http_conn类的初始化工作
+// void http_conn::init(int sockfd, const sockaddr_in& addr);
+// // 初始化连接的其他数据
+// void http_conn::init();
+// // 关闭连接
+// void http_conn::close_conn();
+
+// // #################################修改、注册读写事件的函数
+// // 向epoll中添加需要监听的文件描述符
+// // 最后一个形参表示是否需要one_shot
+// void addfd( int epollfd, int fd, bool one_shot );
+// // 从epoll中移除监听的文件描述符
+// void removefd( int epollfd, int fd );
+// // 修改文件描述符，重置socket上的EPOLLONESHOT事件，以确保下一次可读时，EPOLLIN事件能被触发
+// void modfd(int epollfd, int fd, int ev);
+
+// // ############################################其他一些辅助函数
+// // 对内存映射区执行munmap操作（释放内存映射区的资源）
+// void http_conn::unmap();
+// // 设置文件描述符为非阻塞的函数
+// int setnonblocking( int fd );
+
+
+
+// 函数定义部分----------------------------------------
+// -----------------------------------------------
+// -----------------------------------------------
+// -----------------------------------------------
+// -----------------------------------------------
+// -----------------------------------------------
 
 
 // 设置文件描述符为非阻塞的函数
@@ -32,9 +144,12 @@ void addfd( int epollfd, int fd, bool one_shot ) {
     // 默认为水平触发模式
     // 如果对方连接断开，会触发EPOLLRDHUP事件，这样就不用通过返回值来判断对方是否断开了
     event.events = EPOLLIN | EPOLLRDHUP;   
-    if(one_shot) 
-    {
-        // 防止同一个socket被不同的线程处理
+    if(one_shot) {
+        // 防止在水平触发模式下，工作线程未能及时处理完数据，同一个socket被不同的线程处理，造成数据混乱
+        // 具体原理：
+        // 为了避免这种情况，需要在注册时间时加上EPOLLSHOT标志，EPOLLSHOT相当于说，
+        // 某次循环中epoll_wait唤醒该事件fd后，就会从注册中删除该fd,
+        // 也就是说在有线程处理该fd时，epoll暂时不会遍历该fd，也就不会出现多个线程同时处理一个fd的情况。
         event.events |= EPOLLONESHOT;
     }
     epoll_ctl(epollfd, EPOLL_CTL_ADD, fd, &event);
@@ -56,12 +171,6 @@ void modfd(int epollfd, int fd, int ev) {
     event.events = ev | EPOLLET | EPOLLONESHOT | EPOLLRDHUP;
     epoll_ctl( epollfd, EPOLL_CTL_MOD, fd, &event );
 }
-
-// ----- 静态变量的值必须初始化
-// 所有的客户数，所有http_conn共用一个m_user_count
-int http_conn::m_user_count = 0;
-// 所有socket上的事件都被注册到同一个epoll内核事件中，所以设置成静态的
-int http_conn::m_epollfd = -1;
 
 
 // 关闭连接
@@ -97,10 +206,10 @@ void http_conn::init(int sockfd, const sockaddr_in& addr){
 
 
 // 初始化连接的其他数据
-void http_conn::init()
-{
+void http_conn::init() {
     // ---------- 这个函数初始化的数据成员大部分是http报文的一些字段
-    // ---------- 真正的实际开发我们应该使用库
+    // ---------- 真正的实际开发我们应该使用一些库，否则自己实现的话，太麻烦了
+    // ---------- 由于我们只解析http GET请求，可以简单实现一下，定义一些http的字段
 
     m_check_state = CHECK_STATE_REQUESTLINE;    // 初始状态为检查请求行
     m_linger = false;       // 默认不保持链接  Connection : keep-alive保持连接
@@ -108,15 +217,15 @@ void http_conn::init()
     m_method = GET;         // 默认请求方式为GET
     m_url = 0;              // 要获取的文件资源 
     m_version = 0;          // http版本号
-    m_content_length = 0;   //  
-    m_host = 0;             //
-    m_start_line = 0;       // 
-    m_checked_idx = 0;      // 
-    m_read_idx = 0;         // 
-    m_write_idx = 0;        // 
+    m_content_length = 0;   // 请求体body的长度  
+    m_host = 0;             // 主机名
+    m_start_line = 0;       // 当前正在解析的行的第一个字符（即该行的起始位置）在所有报文字符中的位置。与m_checked_idx搭配
+    m_checked_idx = 0;      // 当前正在分析的字符在读缓冲区中的位置（因为我们解析报文肯定也是一个一个字符往后遍历的）
+    m_read_idx = 0;         // 标识读缓冲区中已经读入的客户端数据的最后一个字节的下一个位置（这个只用于读取数据，不用于分析数据）
+    m_write_idx = 0;        // 写缓冲区中待发送的字节数
     bzero(m_read_buf, READ_BUFFER_SIZE);    // 清空读缓冲
     bzero(m_write_buf, READ_BUFFER_SIZE);   // 清空写缓冲
-    bzero(m_real_file, FILENAME_LEN);       // 
+    bzero(m_real_file, FILENAME_LEN);       // 清空目标文件路径
 }
 
 // 循环读取客户数据，直到无数据可读或者对方关闭连接
@@ -132,7 +241,7 @@ bool http_conn::read() {
         bytes_read = recv(m_sockfd, m_read_buf + m_read_idx, READ_BUFFER_SIZE - m_read_idx, 0 );
         if (bytes_read == -1) {
             if( errno == EAGAIN || errno == EWOULDBLOCK ) {
-                // 没有数据
+                // 没有数据的话，跳出while循环，读取结束
                 break;
             }
             return false;  // 否则就是出错的情况，返回失败 
@@ -287,7 +396,7 @@ http_conn::HTTP_CODE http_conn::parse_content( char* text ) {
 // 主状态机，解析请求
 http_conn::HTTP_CODE http_conn::process_read() {
     HTTP_CODE ret = NO_REQUEST;     
-    LINE_STATE line_state = LINE_OK;  // 从状态机初始状态定义为LINE_OK
+    LINE_STATE line_state = LINE_OK;  // 将从状态机初始状态定义为LINE_OK
     char* text = 0;     // 要读取的数据
     
     // while循环的两个条件（注意：条件顺序不可改变）
@@ -371,11 +480,11 @@ http_conn::HTTP_CODE http_conn::do_request()
     // 以只读方式打开文件
     int fd = open( m_real_file, O_RDONLY );
     // 创建内存映射，把文件映射到内存当中
-    // 第一个参数为NULL表示让OS指定内存映射区的位置
+    // 第一个参数为NULL表示让操作系统为我们指定内存映射区的位置，我们自己无需指定
     // PROT_READ表示只读权限
     // MAP_PRIVATE表示内存映射区的文件与磁盘上的文件不同步（就是内存映射区的文件改变了，磁盘文件不会改变）
     // fd需要操作的/映射的文件的文件描述符
-    // 最后一个参数为0表示从内存映射区从文件开始位置偏移0开始映射（一般为0就行）
+    // 最后一个参数为0表示从内存映射区从文件开始位置偏移0开始映射（一般为0就行，即映射整个文件）
     m_file_address = ( char* )mmap( 0, m_file_stat.st_size, PROT_READ, MAP_PRIVATE, fd, 0 );
     close( fd );
     return FILE_REQUEST;
@@ -440,6 +549,7 @@ bool http_conn::write()
 
 // 往写缓冲中写入待发送的数据
 // 就是具体的可变参数操作函数
+// 类似printf
 bool http_conn::add_response( const char* format, ... ) {
     if( m_write_idx >= WRITE_BUFFER_SIZE ) {
         // 如果当前要写的数据大于写缓冲区的大小，返回失败
@@ -447,13 +557,16 @@ bool http_conn::add_response( const char* format, ... ) {
     }
     // --------- 下面的操作就是将传入的参数数据写入到写缓冲区m_write_buf里
     va_list arg_list; // 多参数列表
-    va_start( arg_list, format );
+    // -----------------------开始
+    va_start( arg_list, format ); 
+    // vsnprintf()函数，将可变参数格式化输出到一个字符数组
     int len = vsnprintf( m_write_buf + m_write_idx, WRITE_BUFFER_SIZE - 1 - m_write_idx, format, arg_list );
     if( len >= ( WRITE_BUFFER_SIZE - 1 - m_write_idx ) ) {
         return false;
     }
     m_write_idx += len;
     va_end( arg_list );
+    // -----------------------结束
     return true;
 }
 
@@ -470,7 +583,8 @@ bool http_conn::add_headers(int content_len) {
     add_blank_line();
 }
 
-// 添加响应体（如果请求不到数据，添加的是返回的错误信息）如果能正确请求到数据，就没有这个cotent字段了
+// 添加响应体（如果请求不到数据，添加的是返回的错误信息）如果能正确请求到数据，就没有这个content字段了
+// 要理解好添加响应体的这个数据
 bool http_conn::add_content( const char* content )
 {
     return add_response( "%s", content );
@@ -554,6 +668,7 @@ bool http_conn::process_write(HTTP_CODE ret) {
     m_iv_count = 1;
     return true;
 }
+
 
 // 由线程池中的工作线程调用，这是处理HTTP请求的入口函数，是http_conn类的成员函数
 void http_conn::process() {
