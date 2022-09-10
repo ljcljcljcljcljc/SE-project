@@ -57,7 +57,7 @@ public:
     enum LINE_STATE { LINE_OK = 0, LINE_BAD, LINE_OPEN };
 
 public:
-    http_conn(){}   // 构造函数，但其实下面的init函数才真正完成http_conn类的初始化的工作
+    http_conn(){}   // 构造函数，但其实下面的init函数才真正完成http_conn类的具体初始化的工作
     ~http_conn(){}  // 析构函数
 public:
     void init(int sockfd, const sockaddr_in& addr); // 初始化新接受的连接
@@ -107,17 +107,17 @@ private:
 
     char m_real_file[ FILENAME_LEN ];       // 客户请求的目标文件的完整路径，其内容等于 doc_root + m_url, doc_root是网站根目录
     char* m_url;                            // 客户请求的目标文件的文件名
-    char* m_version;                        // HTTP协议版本号，我们仅支持HTTP1.1
+    char* m_version;                        // HTTP协议版本号，我们仅支持HTTP1.0和1.1
     char* m_host;                           // 主机名
     int m_content_length;                   // HTTP请求的消息总长度
-    bool m_linger;                          // HTTP请求是否要求保持连接 即是否为keep-alive
+    bool m_linger;                          // HTTP请求是否要求保持连接，即是否为keep-alive
 
     char m_write_buf[ WRITE_BUFFER_SIZE ];  // 写缓冲区
     int m_write_idx;                        // 写缓冲区中待发送的字节数
-    char* m_file_address;                   // 客户请求的目标文件被mmap到内存中的起始位置
+    char* m_file_address;                   // 客户请求的目标文件被mmap内存映射到内存中的起始位置
     struct stat m_file_stat;                // 目标文件的状态。通过它我们可以判断文件是否存在、是否为目录、是否可读，并获取文件大小等信息
     struct iovec m_iv[2];                   // 我们将采用writev来执行写操作，所以定义下面两个成员，其中m_iv_count表示被写内存块的数量。
-    int m_iv_count;
+    int m_iv_count;                         // iovector对象有两个数据成员，一个表示内存起始地址，另一个表示该块内存内容的长度
 };
 
 #endif
