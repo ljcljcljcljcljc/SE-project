@@ -26,9 +26,9 @@ extern void removefd( int epollfd, int fd );
 void addsig(int sig, void( handler )(int)){
     struct sigaction sa;                  // 创建sigaction结构体用于信号处理函数sigaction
     memset( &sa, '\0', sizeof( sa ) );
-    sa.sa_handler = handler;              //  将信号处理函数设置为handler
+    sa.sa_handler = handler;              //  将信号处理函数设置为handler函数
     sigfillset( &sa.sa_mask );            // 设置临时阻塞信号集          
-    assert( sigaction( sig, &sa, NULL ) != -1 );    
+    assert( sigaction( sig, &sa, NULL ) != -1 );    // 如果assert中的表达式为FALSE，代码会终止运行，并且会把源文件，错误的代码，以及行号，都输出来
 }
 
 
@@ -63,6 +63,7 @@ int main( int argc, char* argv[] ) {
     }
 
     // 创建一个数组用于保存所有的客户端连接信息
+    // 这个数组是在我们主线程（即main函数线程中）创建的，只对主线程可见
     http_conn* users = new http_conn[ MAX_FD ];
 
     // -------- 下面的代码就是之前网络通信的代码
@@ -104,6 +105,7 @@ int main( int argc, char* argv[] ) {
     // 下面就是循环处理事件，通信的代码
     while(true) {
         
+        // events是epoll_wait函数的传出参数，其中存了number个就绪事件
         int number = epoll_wait( epollfd, events, MAX_EVENT_NUMBER, -1 );
         
         if ( ( number < 0 ) && ( errno != EINTR ) ) {
